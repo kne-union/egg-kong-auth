@@ -16,8 +16,11 @@ module.exports = {
     }
 
     if (typeof options.data === 'object') {
-      if (get(options, 'headers["content-type"]', '').indexOf('application/x-www-form-urlencoded') > -1) {
+      const contentType = get(options, 'headers["content-type"]', '');
+      if (contentType.indexOf('application/x-www-form-urlencoded') > -1) {
         options.data = qs.stringify(options.data);
+      } else if (contentType.indexOf('application/json') > -1) {
+        options.data = JSON.stringify(options.data);
       }
     }
 
@@ -93,7 +96,7 @@ module.exports = {
       throw new Error('refresh_token is not exist');
     }
     const server = this.app.kongAuthServer;
-    const {clientId, clientSecret} = this.app.config.oauthClient;
+    const {clientId, clientSecret} = this.app.config.kongAuth;
 
     const url = server.path,
       options = {
@@ -127,12 +130,8 @@ module.exports = {
     return this.session.userAccessToken;
   },
   async useApiToken() {
-    if (!this.session.apiAccessToken) {
+    if (!this.session.apiAccessToken || Date.now() - this.session.apiAccessToken.time > this.session.apiAccessToken['expires_in']) {
       await this.getApiToken();
-    }
-
-    if (Date.now() - this.session.apiAccessToken.time > this.session.apiAccessToken['expires_in']) {
-      await this.refreshToken('apiAccessToken');
     }
 
     return this.session.apiAccessToken;
