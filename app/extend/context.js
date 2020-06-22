@@ -40,6 +40,7 @@ module.exports = {
     if (Buffer.isBuffer(response.data) && contentType.indexOf('text') > -1) {
       response.data = response.data.toString();
     }
+    this.app.logger.info(JSON.stringify(response.data));
     return response;
   },
   async getUserToken(code) {
